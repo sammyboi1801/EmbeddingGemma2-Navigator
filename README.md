@@ -231,19 +231,18 @@ python -m http.server 8000 --directory docs       # frontend
 
 **Deploy the model server (Hugging Face Spaces).**
 
-1. Create a public Space with the **Docker** SDK (free CPU tier).
-2. Upload the server files and the Space configuration:
+Log in with a Hugging Face **write** token, then run the deploy script. It creates a public
+Docker Space on the free CPU tier, if it does not exist yet, and uploads only the files the server
+needs:
 
-   ```bash
-   pip install -U huggingface_hub
-   hf auth login
-   hf upload <hf-user>/eg2-navigator . . --repo-type space \
-       --exclude "README.md" "space/*" "docs/*" "logs/*" "results/*" "checkpoints/archive/*"
-   hf upload <hf-user>/eg2-navigator space/README.md README.md --repo-type space
-   ```
+```bash
+pip install -U huggingface_hub
+hf auth login
+python space/deploy.py <hf-user>/<space-name>
+```
 
-   The [Dockerfile](Dockerfile) installs CPU PyTorch, downloads the encoder at build time, and
-   serves at `https://<hf-user>-eg2-navigator.hf.space`. `GET /health` reports readiness.
+The [Dockerfile](Dockerfile) installs CPU PyTorch, downloads the encoder at build time, and
+serves at `https://<hf-user>-<space-name>.hf.space` (lowercase). `GET /health` reports readiness.
 
 **Deploy the frontend (GitHub Pages).**
 
