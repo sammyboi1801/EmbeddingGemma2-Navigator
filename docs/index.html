@@ -16,6 +16,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
 <script src="config.js"></script>
+<script>
+  // apply a saved theme choice before first paint (otherwise the page follows the system setting)
+  try { const t = localStorage.getItem("eg2-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
 <style>
   :root {
     --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
@@ -49,12 +53,33 @@
   .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
   /* header */
-  .masthead { border-bottom: 1px solid var(--hair); padding: 18px 0; }
-  .masthead .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
-  .brand { font: 600 15px/1 var(--sans); letter-spacing: -.01em; }
-  .nav { display: flex; gap: 20px; align-items: center; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }
-  .nav a { padding: 8px 0; }
-  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .masthead { border-bottom: 1px solid var(--hair); padding: 12px 0; }
+  .masthead .wrap { display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "brand nav tools";
+                    align-items: center; gap: 4px 24px; }
+  .brand { grid-area: brand; font: 600 15px/1 var(--sans); letter-spacing: -.01em; white-space: nowrap; }
+  .nav { grid-area: nav; justify-self: end; display: flex; gap: 20px; font-size: 14px; }
+  .nav a { padding: 8px 0; white-space: nowrap; }
+  .tools { grid-area: tools; display: flex; align-items: center; gap: 14px; }
+  .icon-btn { display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 8px; padding: 0;
+              border: 1px solid var(--ring); background: transparent; color: var(--ink); cursor: pointer; }
+  .icon-btn:hover { background: var(--surface); }
+  .icon-btn:focus-visible { outline: 2px solid var(--seq); outline-offset: 2px; }
+  .icon-btn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn .i-sun { display: none; }
+  :root[data-theme="dark"] .icon-btn .i-sun { display: block; } :root[data-theme="dark"] .icon-btn .i-moon { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .icon-btn .i-sun { display: block; }
+    :root:not([data-theme="light"]) .icon-btn .i-moon { display: none; }
+  }
+  @media (max-width: 640px) {
+    .masthead { padding: 8px 0 4px; }
+    .masthead .wrap { grid-template-columns: 1fr auto; grid-template-areas: "brand tools" "nav nav"; column-gap: 12px; }
+    .nav { justify-self: start; gap: 18px; font-size: 13px; color: var(--ink-2); }
+    .nav a { padding: 6px 0; }
+    .tools { gap: 10px; }
+    .status { font-size: 12px; }
+  }
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
   .status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
   .status[data-state="ok"] .dot { background: var(--ok); } .status[data-state="err"] .dot { background: var(--err); }
 
@@ -186,20 +211,40 @@
   .limits li b { color: var(--ink); font-weight: 500; }
   footer { border-top: 1px solid var(--hair); padding: 20px 0 32px; font-size: 13px; color: var(--muted); }
   footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  /* phone layout: last, so it overrides the base rules above */
+  @media (max-width: 640px) {
+    .hero { padding: 28px 0 20px; }
+    .hero h1 { font-size: 28px; margin: 10px 0 12px; }
+    .abstract { font-size: 15px; line-height: 1.6; }
+    .figures { margin-top: 24px; }
+    .figures div { padding-top: 12px; }
+    .figures dd { font-size: 19px; }
+    .panel-head .meta { display: none; }
+    .panel-head, .panel-body { padding-left: 14px; padding-right: 14px; }
+    .transcript { padding-left: 14px; padding-right: 14px; }
+    .turn { grid-template-columns: 54px minmax(0, 1fr); gap: 10px; }
+    .status { font-size: 12px; gap: 6px; }
+  }
 </style>
 </head>
 <body>
-<div class="masthead">
+<header class="masthead">
   <div class="wrap">
     <div class="brand">EG2 Navigator</div>
-    <div class="nav">
+    <nav class="nav" aria-label="Page">
       <a href="#method">Architecture</a>
       <a id="codeLink" href="#">Code</a>
       <a href="https://huggingface.co/google/embeddinggemma-2">Encoder</a>
+    </nav>
+    <div class="tools">
       <span id="status" class="status" data-state="wait" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Connecting</span></span>
+      <button id="themeBtn" class="icon-btn" type="button" aria-label="Switch theme">
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>
+      </button>
     </div>
   </div>
-</div>
+</header>
 
 <main class="wrap">
   <section class="hero">
@@ -557,6 +602,23 @@
     messages = []; transcript.replaceChildren(startBlock); resetTrace(); input.focus();
   });
   if (window.EG2_REPO) $("codeLink").href = window.EG2_REPO; else $("codeLink").remove();
+
+  // ---------- theme toggle ----------
+  const root = document.documentElement, darkQuery = matchMedia("(prefers-color-scheme: dark)");
+  const currentTheme = () => root.dataset.theme || (darkQuery.matches ? "dark" : "light");
+  function syncThemeUi() {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    $("themeBtn").setAttribute("aria-label", `Switch to ${next} mode`); $("themeBtn").title = `Switch to ${next} mode`;
+    const page = getComputedStyle(root).getPropertyValue("--page").trim();
+    for (const m of document.querySelectorAll('meta[name="theme-color"]')) m.content = page;  // browser chrome color
+  }
+  $("themeBtn").addEventListener("click", () => {
+    root.dataset.theme = currentTheme() === "dark" ? "light" : "dark";
+    try { localStorage.setItem("eg2-theme", root.dataset.theme); } catch (e) {}
+    syncThemeUi();
+  });
+  darkQuery.addEventListener("change", syncThemeUi);
+  syncThemeUi();
   addEventListener("resize", drawChart);
   drawChart();
   waitForBackend();

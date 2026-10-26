@@ -214,6 +214,8 @@ python eg2_autoregressive_decoding.py --data chatmix --init soda.pt --steps 3000
 
 ## Web demo
 
+**Live:** <https://sammyboi1801.github.io/EmbeddingGemma2-Navigator/>
+
 The demo is split between a static frontend and a model server:
 
 ```
