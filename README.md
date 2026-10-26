@@ -6,6 +6,11 @@ reads the conversation. A small trained network, the *navigator* (10.5M paramete
 reply. Only the navigator is trained. After about 1.7 hours on a single laptop GPU, the model
 holds short, fluent multi-turn conversations.
 
+**[Live demo](https://sammyboi1801.github.io/EmbeddingGemma2-Navigator/)**: chat with the model
+and inspect each sampled token. The model server runs on a
+[Hugging Face Space](https://huggingface.co/spaces/sammyboi1801/EmbeddingGemma2-Navigator) and
+may take about a minute to start if it has been idle.
+
 | | |
 |---|---|
 | Encoder | EmbeddingGemma 2 text tower, 271M parameters, **frozen** |
