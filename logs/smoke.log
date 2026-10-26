@@ -1,0 +1,12 @@
+[encoder] EmbeddingGemma2TextModel, 271M frozen params
+[data] dailydialog: 9112 conversations x3
+[data] dailydialog: 805 conversations x1
+[data] dialogue: 38567 train / 1931 val
+[vocab] 22946 of 262144 tokens | [dims] table 512-d, hidden 768-d
+[navigator] 10.5M trainable params
+step    100 | ce 5.572 (ppl 263.0) | aux 0.000 | 23s
+step    200 | ce 4.934 (ppl 138.9) | aux 0.000 | 46s
+step    300 | ce 4.707 (ppl 110.7) | aux 0.000 | 70s
+  [val] ce 4.649 (ppl 104.4)
+  [sample] User: Hi! How was your day? | Assistant: I'm going to let'm just to go.
+  [ckpt] saved test.pt (best val ce 4.649)

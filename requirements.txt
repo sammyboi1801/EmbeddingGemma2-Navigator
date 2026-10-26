@@ -1,0 +1,9 @@
+# Install the CUDA build of PyTorch first (see https://pytorch.org), e.g.:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128
+# Tested with torch 2.11.0+cu128 on an RTX 4060 Laptop GPU (8 GB), Windows 11, Python 3.13.
+torch>=2.6
+transformers>=5.19   # EmbeddingGemma 2 support
+tokenizers>=0.23.1,<0.24
+datasets>=5.1        # training only
+fastapi>=0.115       # server.py (web demo backend)
+uvicorn>=0.30

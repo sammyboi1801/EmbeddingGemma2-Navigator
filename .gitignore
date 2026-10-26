@@ -1,0 +1,18 @@
+# Python / envs / editors
+__pycache__/
+*.pyc
+.venv/
+venv/
+.idea/
+.vscode/
+
+# Intermediate and duplicate checkpoints (kept locally; only checkpoints/chat.pt is committed)
+checkpoints/archive/
+*.pt
+!checkpoints/chat.pt
+
+# Hugging Face / misc caches
+.cache/
+
+# Raw stderr from training runs (progress bars, environment warnings with local paths)
+logs/*.err

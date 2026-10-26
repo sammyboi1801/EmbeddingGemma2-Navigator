@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EG2 Navigator: generating text with a frozen embedding model</title>
+<meta name="description" content="Interactive demo: a 10.5M-parameter navigator generates text on top of a frozen EmbeddingGemma 2 encoder. Inspect the decoding trace token by token.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="EG2 Navigator: generating text with a frozen embedding model">
+<meta property="og:description" content="A frozen EmbeddingGemma 2 encoder reads, a 10.5M-parameter navigator writes. Chat with it and inspect every sampled token.">
+<meta name="twitter:card" content="summary">
+<meta name="theme-color" content="#f9f9f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%230b0b0b'/><path d='M8 22 L14 10 L18 18 L24 8' stroke='%2386b6ef' stroke-width='2.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&display=swap" rel="stylesheet">
+<script src="config.js"></script>
+<style>
+  :root {
+    --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+    --hair: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11, 11, 11, .10);
+    --seq: #2a78d6; --seq-rgb: 42, 120, 214; --seq-strong: #1c5cab;
+    --ok: #006300; --warn: #a15c00; --err: #b42318;
+    --serif: "Source Serif 4", Georgia, serif; --sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+      --hair: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, .10);
+      --seq: #3987e5; --seq-rgb: 57, 135, 229; --seq-strong: #86b6ef;
+      --ok: #0ca30c; --warn: #e0a030; --err: #f04438;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --hair: #2c2c2a; --axis: #383835; --ring: rgba(255, 255, 255, .10);
+    --seq: #3987e5; --seq-rgb: 57, 135, 229; --seq-strong: #86b6ef;
+    --ok: #0ca30c; --warn: #e0a030; --err: #f04438;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 15px/1.6 var(--sans); }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 20px; }
+  a { color: var(--ink); text-decoration-color: var(--axis); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: var(--ink); }
+  .eyebrow { font: 500 12px/1 var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* header */
+  .masthead { border-bottom: 1px solid var(--hair); padding: 18px 0; }
+  .masthead .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .brand { font: 600 15px/1 var(--sans); letter-spacing: -.01em; }
+  .nav { display: flex; gap: 20px; align-items: center; font-size: 14px; color: var(--ink-2); flex-wrap: wrap; }
+  .nav a { padding: 8px 0; }
+  .status { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .status .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+  .status[data-state="ok"] .dot { background: var(--ok); } .status[data-state="err"] .dot { background: var(--err); }
+
+  .hero { padding: 48px 0 28px; }
+  .hero h1 { font: 600 clamp(28px, 4vw, 40px)/1.15 var(--serif); letter-spacing: -.015em; margin: 12px 0 14px; max-width: 820px; }
+  .abstract { max-width: 760px; color: var(--ink-2); font-size: 16px; margin: 0; }
+  .figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 32px 0 0; border-top: 1px solid var(--hair); }
+  .figures div { padding: 16px 16px 0 0; }
+  .figures dt { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+  .figures dd { margin: 4px 0 0; font: 500 22px/1.2 var(--mono); letter-spacing: -.02em; }
+  .figures dd small { font: 400 13px var(--sans); color: var(--ink-2); letter-spacing: 0; margin-left: 4px; }
+  @media (max-width: 720px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+  /* workspace */
+  .workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px; padding: 12px 0 40px; }
+  @media (max-width: 920px) { .workspace { grid-template-columns: 1fr; } }
+  .panel { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px; min-width: 0; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+                padding: 14px 18px; border-bottom: 1px solid var(--hair); }
+  .panel-head h2 { margin: 0; font: 600 14px/1.3 var(--sans); }
+  .panel-head .meta { font-size: 12px; color: var(--muted); }
+  .panel-body { padding: 16px 18px; }
+
+  /* transcript */
+  .conv { display: flex; flex-direction: column; height: 640px; }
+  @media (max-width: 920px) {
+    .conv { height: auto; }
+    .transcript { flex: none; min-height: 200px; max-height: 60vh; }
+  }
+  .transcript { flex: 1; overflow-y: auto; padding: 8px 18px; }
+  .turn { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
+  .turn:last-child { border-bottom: 0; }
+  .who { font: 500 11px/1.9 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .turn.model .who { color: var(--seq-strong); }
+  .said { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .turn.live .said::after { content: ""; display: inline-block; width: 7px; height: 1.05em; margin-left: 2px;
+                            vertical-align: -2px; background: var(--seq); animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .note { padding: 12px 0; color: var(--ink-2); font-size: 13px; }
+  .note.err { color: var(--err); }
+  .start { padding: 28px 0; color: var(--ink-2); }
+  .start p { margin: 0 0 10px; }
+  .prompts { list-style: none; margin: 0; padding: 0; }
+  .prompts li { border-top: 1px solid var(--hair); }
+  .prompts li:last-child { border-bottom: 1px solid var(--hair); }
+  .prompts button { all: unset; display: flex; justify-content: space-between; width: 100%; box-sizing: border-box;
+                    padding: 10px 2px; cursor: pointer; color: var(--ink); }
+  .prompts button::after { content: "→"; color: var(--muted); }
+  .prompts button:hover::after, .prompts button:focus-visible::after { color: var(--ink); }
+  .prompts button:focus-visible { outline: 2px solid var(--seq); outline-offset: 2px; }
+  .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--hair); }
+  .composer input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--axis); border-radius: 8px;
+                    background: var(--page); color: var(--ink); font: inherit; }
+  .composer input:focus { outline: 2px solid var(--seq); outline-offset: -1px; border-color: transparent; }
+  @media (max-width: 920px) { .composer input { font-size: 16px; } }  /* below 16px, iOS zooms on focus */
+  .btn { padding: 9px 14px; border-radius: 8px; font: 500 14px var(--sans); cursor: pointer; border: 1px solid var(--axis);
+         background: transparent; color: var(--ink); }
+  .btn.primary { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  .btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn:focus-visible { outline: 2px solid var(--seq); outline-offset: 2px; }
+
+  /* trace */
+  .trace { display: flex; flex-direction: column; }
+  .section-label { font: 500 11px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+  .tokens { min-height: 92px; max-height: 190px; overflow-y: auto; font: 14px/2 var(--mono); white-space: pre-wrap;
+            overflow-wrap: anywhere; }
+  .tokens .placeholder { font-family: var(--sans); color: var(--muted); }
+  .tok { border-radius: 3px; padding: 2px 0; cursor: default; }
+  .tok:hover, .tok:focus-visible, .tok.hl { outline: 1.5px solid var(--seq-strong); outline-offset: 0; }
+  .reenc { display: inline-block; width: 0; height: 1.4em; border-left: 1.5px dashed var(--muted); margin: 0 5px; vertical-align: -5px; }
+  .chart { margin-top: 18px; }
+  .chart svg { display: block; width: 100%; height: 132px; overflow: visible; }
+  .chart .gridline { stroke: var(--hair); stroke-width: 1; }
+  .chart .baseline { stroke: var(--axis); stroke-width: 1; }
+  .chart .axis-label { fill: var(--muted); font: 11px var(--mono); }
+  .chart .bar { fill: var(--seq); }
+  .chart .bar.hl { fill: var(--seq-strong); }
+  .chart .enc-rule { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+  .chart .hit { fill: transparent; cursor: default; outline: none; }
+  .caption { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 18px 0 0;
+           border-top: 1px solid var(--hair); }
+  .stats div { padding: 10px 10px 0 0; }
+  .stats dt { font-size: 12px; color: var(--muted); }
+  .stats dd { margin: 2px 0 0; font: 500 16px var(--mono); }
+  @media (max-width: 520px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; border-top: 1px solid var(--hair); }
+  @media (max-width: 520px) { .controls { grid-template-columns: 1fr; } }
+  .control { display: grid; grid-template-columns: 1fr auto; font-size: 13px; color: var(--ink-2); gap: 4px 8px; }
+  .control output { font: 500 13px var(--mono); color: var(--ink); }
+  .control input { grid-column: 1 / -1; width: 100%; height: 28px; margin: 0; accent-color: var(--ink); }
+  details.table { border-top: 1px solid var(--hair); }
+  details.table summary { cursor: pointer; padding: 12px 18px; font-size: 13px; color: var(--ink-2); }
+  details.table .scroll { max-height: 220px; overflow: auto; padding: 0 18px 14px; }
+  table { width: 100%; border-collapse: collapse; font: 13px var(--mono); }
+  th { text-align: left; font: 500 11px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--muted);
+       position: sticky; top: 0; background: var(--surface); padding: 6px 8px 6px 0; border-bottom: 1px solid var(--hair); }
+  td { padding: 4px 8px 4px 0; border-bottom: 1px solid var(--hair); white-space: pre; }
+  td.r, th.r { text-align: right; }
+
+  .tooltip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--surface);
+             border-radius: 6px; padding: 7px 10px; font: 12px/1.45 var(--sans); box-shadow: 0 4px 16px rgba(0,0,0,.18);
+             transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; }
+  .tooltip strong { font: 600 14px var(--mono); }
+  .tooltip .k { opacity: .7; }
+
+  /* method */
+  .method { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 40px; padding: 36px 0 56px;
+            border-top: 1px solid var(--hair); }
+  @media (max-width: 920px) { .method { grid-template-columns: 1fr; gap: 24px; } }
+  .method h2 { font: 600 22px/1.25 var(--serif); margin: 10px 0 12px; }
+  .method p { color: var(--ink-2); margin: 0 0 12px; }
+  figure { margin: 0; }
+  figure svg { width: 100%; height: auto; display: block; }
+  figure .fig-tall { display: none; max-width: 380px; margin: 0 auto; }
+  @media (max-width: 600px) { figure .fig-wide { display: none; } figure .fig-tall { display: block; } }
+  figure .box { fill: var(--surface); stroke: var(--axis); }
+  figure .box.frozen { fill: var(--page); stroke-dasharray: 4 3; }
+  figure .box.trained { stroke: var(--seq); stroke-width: 1.5; }
+  figure text { fill: var(--ink); font: 12px var(--sans); }
+  figure .sm { fill: var(--muted); font: 11px var(--mono); }
+  figure .arrow { stroke: var(--ink-2); stroke-width: 1.2; fill: none; marker-end: url(#ah); }
+  figcaption { font-size: 13px; color: var(--muted); margin-top: 10px; }
+  .limits { list-style: none; padding: 0; margin: 0; }
+  .limits li { padding: 10px 0; border-top: 1px solid var(--hair); color: var(--ink-2); font-size: 14px; }
+  .limits li b { color: var(--ink); font-weight: 500; }
+  footer { border-top: 1px solid var(--hair); padding: 20px 0 32px; font-size: 13px; color: var(--muted); }
+  footer .wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="masthead">
+  <div class="wrap">
+    <div class="brand">EG2 Navigator</div>
+    <div class="nav">
+      <a href="#method">Architecture</a>
+      <a id="codeLink" href="#">Code</a>
+      <a href="https://huggingface.co/google/embeddinggemma-2">Encoder</a>
+      <span id="status" class="status" data-state="wait" role="status"><span class="dot" aria-hidden="true"></span><span id="statusText">Connecting</span></span>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <section class="hero">
+    <div class="eyebrow">Research demo</div>
+    <h1>Generating text with a frozen embedding model</h1>
+    <p class="abstract">A frozen EmbeddingGemma 2 encoder reads the conversation and a small trained navigator writes
+      the reply, predicting 16 tokens per encoder pass by pointing into the encoder's own token-embedding table.
+      The encoder receives no gradients. Below, every sampled token is shown with its probability and the points
+      where the encoder re-reads the context.</p>
+    <dl class="figures">
+      <div><dt>Encoder (frozen)</dt><dd>271M<small>params</small></dd></div>
+      <div><dt>Navigator (trained)</dt><dd>10.5M<small>params</small></dd></div>
+      <div><dt>Tokens per encoder pass</dt><dd>16</dd></div>
+      <div><dt>Training compute</dt><dd>1.8 h<small>1× RTX 4060</small></dd></div>
+    </dl>
+  </section>
+
+  <section class="workspace" aria-label="Interactive demo">
+    <div class="panel conv">
+      <div class="panel-head"><h2>Conversation</h2><span class="meta" id="turnMeta">Format: User / Assistant turns</span></div>
+      <div class="transcript" id="transcript" aria-live="polite">
+        <div class="start" id="start">
+          <p>Send a message, or start from one of these prompts:</p>
+          <ul class="prompts" id="prompts"></ul>
+        </div>
+      </div>
+      <form class="composer" id="form" autocomplete="off">
+        <input id="input" type="text" maxlength="500" placeholder="Message the model" aria-label="Message">
+        <button class="btn primary" id="send" type="submit">Send</button>
+        <button class="btn" id="clear" type="button">Reset</button>
+      </form>
+    </div>
+
+    <div class="panel trace">
+      <div class="panel-head"><h2>Decoding trace</h2><span class="meta">Latest reply</span></div>
+      <div class="panel-body">
+        <div class="section-label">Sampled tokens</div>
+        <div class="tokens" id="tokens"><span class="placeholder">Tokens appear here as they are sampled. Shading encodes p(token); dashed rules mark encoder re-reads.</span></div>
+
+        <div class="chart" id="chart">
+          <div class="section-label">Probability of each sampled token</div>
+          <svg id="strip" role="img" aria-label="Bar chart of the probability of each sampled token"></svg>
+          <div class="caption">Bars: p(token) at sampling time, after temperature and top-k. Dashed lines: the frozen encoder re-reads the full context.</div>
+        </div>
+
+        <dl class="stats">
+          <div><dt>Tokens</dt><dd id="sTok">–</dd></div>
+          <div><dt>Encoder passes</dt><dd id="sEnc">–</dd></div>
+          <div><dt>Mean p</dt><dd id="sMean">–</dd></div>
+          <div><dt>Server throughput</dt><dd id="sTps">–</dd></div>
+        </dl>
+      </div>
+      <div class="panel-body controls" aria-label="Sampling parameters">
+        <label class="control">Temperature <output id="tempOut"></output><input id="temp" type="range" min="0.1" max="1.5" step="0.05" value="0.5"></label>
+        <label class="control">Top-k (0 = off) <output id="topkOut"></output><input id="topk" type="range" min="0" max="200" step="1" value="40"></label>
+        <label class="control">Max new tokens <output id="maxOut"></output><input id="max" type="range" min="8" max="160" step="8" value="96"></label>
+        <label class="control">Playback delay <output id="delayOut"></output><input id="delay" type="range" min="0" max="250" step="10" value="30"></label>
+      </div>
+      <details class="table">
+        <summary>Token table</summary>
+        <div class="scroll">
+          <table><thead><tr><th class="r">#</th><th>Token</th><th class="r">p</th><th class="r">Chunk</th></tr></thead>
+            <tbody id="tbody"></tbody></table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="method" id="method">
+    <div>
+      <div class="eyebrow">Method</div>
+      <h2>A trained navigator on a frozen map</h2>
+      <p>The encoder is bidirectional, so it cannot generate left to right by itself. Instead it is run once per
+        chunk: it reads the entire conversation and returns per-token hidden states (the "map"). The navigator, a
+        4-layer causal transformer, then takes up to 16 steps, self-attending to the tokens it has written in the
+        chunk and cross-attending to the map. Each step scores candidate tokens by a dot product with the encoder's
+        frozen embedding table. After 16 tokens the encoder re-reads the context, now including the new text.</p>
+      <p>Training used two stages: about 200k social dialogues (SODA, DailyDialog) for fluency, then 28k assistant-style
+        and empathetic conversations, with loss on assistant turns only.</p>
+      <figure>
+        <svg class="fig-wide" viewBox="0 0 698 220" role="img" aria-label="Architecture: frozen encoder produces a map that the trained navigator cross-attends to">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill: var(--ink-2)"/></marker></defs>
+          <rect class="box" x="8" y="22" width="160" height="46" rx="6"/><text x="88" y="42" text-anchor="middle">Conversation so far</text><text class="sm" x="88" y="59" text-anchor="middle">≤ 384 tokens</text>
+          <rect class="box frozen" x="228" y="16" width="222" height="58" rx="6"/><text x="339" y="39" text-anchor="middle">EmbeddingGemma 2</text><text class="sm" x="339" y="58" text-anchor="middle">frozen · bidirectional · 271M</text>
+          <rect class="box" x="510" y="22" width="172" height="46" rx="6"/><text x="596" y="42" text-anchor="middle">Map</text><text class="sm" x="596" y="59" text-anchor="middle">per-token states, 768-d</text>
+          <rect class="box trained" x="228" y="128" width="222" height="58" rx="6"/><text x="339" y="151" text-anchor="middle">Navigator</text><text class="sm" x="339" y="170" text-anchor="middle">trained · causal · 10.5M</text>
+          <rect class="box" x="510" y="134" width="172" height="46" rx="6"/><text x="596" y="154" text-anchor="middle">Next 16 tokens</text><text class="sm" x="596" y="171" text-anchor="middle">logits = W·h · Eᵀ</text>
+          <path class="arrow" d="M168 45 H224"/><path class="arrow" d="M450 45 H506"/>
+          <path class="arrow" d="M596 68 V100 H390 V124"/><text class="sm" x="500" y="94" text-anchor="middle">cross-attention</text>
+          <path class="arrow" d="M450 157 H506"/>
+          <path class="arrow" d="M682 157 H686 V208 H88 V72"/><text class="sm" x="98" y="200">append, then re-encode</text>
+        </svg>
+        <svg class="fig-tall" viewBox="0 0 360 420" role="img" aria-label="Architecture, stacked: conversation, frozen encoder, map, navigator, next 16 tokens, then back to the conversation">
+          <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill: var(--ink-2)"/></marker></defs>
+          <rect class="box" x="20" y="8" width="290" height="46" rx="6"/><text x="165" y="28" text-anchor="middle">Conversation so far</text><text class="sm" x="165" y="45" text-anchor="middle">≤ 384 tokens</text>
+          <rect class="box frozen" x="20" y="88" width="290" height="50" rx="6"/><text x="165" y="109" text-anchor="middle">EmbeddingGemma 2</text><text class="sm" x="165" y="127" text-anchor="middle">frozen · bidirectional · 271M</text>
+          <rect class="box" x="20" y="172" width="290" height="46" rx="6"/><text x="165" y="192" text-anchor="middle">Map</text><text class="sm" x="165" y="209" text-anchor="middle">per-token states, 768-d</text>
+          <rect class="box trained" x="20" y="262" width="290" height="50" rx="6"/><text x="165" y="283" text-anchor="middle">Navigator</text><text class="sm" x="165" y="301" text-anchor="middle">trained · causal · 10.5M</text>
+          <rect class="box" x="20" y="346" width="290" height="46" rx="6"/><text x="165" y="366" text-anchor="middle">Next 16 tokens</text><text class="sm" x="165" y="383" text-anchor="middle">logits = W·h · Eᵀ</text>
+          <path class="arrow" d="M165 54 V84" style="marker-end:url(#ah2)"/><path class="arrow" d="M165 138 V168" style="marker-end:url(#ah2)"/>
+          <path class="arrow" d="M165 218 V258" style="marker-end:url(#ah2)"/><text class="sm" x="174" y="243">cross-attention</text>
+          <path class="arrow" d="M165 312 V342" style="marker-end:url(#ah2)"/>
+          <path class="arrow" d="M310 369 H340 V31 H314" style="marker-end:url(#ah2)"/>
+          <text class="sm" transform="rotate(90 350 200)" x="350" y="200" text-anchor="middle">append, then re-encode</text>
+        </svg>
+        <figcaption>Figure 1. One generation cycle. Only the navigator (solid outline) is trained.</figcaption>
+      </figure>
+    </div>
+    <div>
+      <div class="eyebrow">Limitations</div>
+      <h2>What to expect</h2>
+      <ul class="limits">
+        <li><b>Fluent, shallow.</b> Small talk, follow-up questions and supportive replies work; factual questions
+          ("why is the sky blue?") get on-topic but meaningless answers.</li>
+        <li><b>Short memory.</b> It can lose the thread after two or three turns; the context window is 384 tokens.</li>
+        <li><b>Sampling matters.</b> Temperature around 0.5 gives the most coherent replies; higher values expose
+          low-probability tokens, visible as short bars in the trace.</li>
+        <li><b>Scale.</b> About 12M training tokens on one laptop GPU. A capable assistant would need a far larger
+          navigator and orders of magnitude more data.</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Encoder: google/embeddinggemma-2 (Apache-2.0). Navigator trained on SODA, DailyDialog, everyday-conversations, Empathetic Dialogues.</span>
+    <span>Research demo, not for production use.</span>
+  </div>
+</footer>
+
+<div class="tooltip" id="tip" hidden></div>
+
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const API = (params.get("api") || window.EG2_API || "").replace(/\/+$/, "");
+  const $ = (id) => document.getElementById(id);
+  const transcript = $("transcript"), input = $("input"), sendBtn = $("send"), tokensEl = $("tokens"),
+        strip = $("strip"), tbody = $("tbody"), tip = $("tip"), startBlock = $("start");
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const PROMPTS = ["Hi, how are you today?", "What should I cook for dinner tonight?",
+                   "I have a job interview tomorrow and I'm nervous.", "I just adopted a kitten.", "Do you like rainy days?"];
+  const TOKEN_PLACEHOLDER = tokensEl.innerHTML;
+  let messages = [], busy = false, ready = false, controller = null;
+  let trace = [];   // [{t, p, c}] for the latest reply
+
+  // ---------- settings ----------
+  const fmt = { temp: (v) => (+v).toFixed(2), topk: (v) => v, max: (v) => v, delay: (v) => v + " ms" };
+  for (const k of Object.keys(fmt)) {
+    const el = $(k), out = $(k + "Out"), sync = () => { out.textContent = fmt[k](el.value); };
+    el.addEventListener("input", sync); sync();
+  }
+
+  // ---------- backend status ----------
+  function setStatus(state, text) { $("status").dataset.state = state; $("statusText").textContent = text; }
+  async function waitForBackend() {
+    if (!API || API.includes("YOUR-HF-USERNAME")) { setStatus("err", "Backend not configured"); return; }
+    const t0 = Date.now();
+    for (;;) {
+      try {
+        const r = await fetch(API + "/health", { cache: "no-store" });
+        if (r.ok) { const h = await r.json(); ready = true; setStatus("ok", `Backend ready · ${h.device}`); return; }
+      } catch (e) { /* the Space may be waking up */ }
+      const s = Math.round((Date.now() - t0) / 1000);
+      if (s > 300) { setStatus("err", "Backend unreachable"); return; }
+      setStatus("wait", s < 5 ? "Connecting" : `Starting backend · ${s}s`);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+  }
+
+  // ---------- transcript ----------
+  function addTurn(role, text) {
+    startBlock.remove();
+    const row = document.createElement("div");
+    row.className = "turn " + role;
+    const who = document.createElement("div"); who.className = "who"; who.textContent = role === "user" ? "User" : "Model";
+    const said = document.createElement("div"); said.className = "said"; said.textContent = text;
+    row.append(who, said); transcript.appendChild(row); transcript.scrollTop = transcript.scrollHeight;
+    return row;
+  }
+  function addNote(text, err) {
+    const n = document.createElement("div"); n.className = "note" + (err ? " err" : ""); n.textContent = text;
+    transcript.appendChild(n); transcript.scrollTop = transcript.scrollHeight;
+  }
+
+  // ---------- trace: tokens, chart, table, stats ----------
+  const shade = (p) => `rgba(var(--seq-rgb), ${(0.06 + 0.42 * p).toFixed(3)})`;
+  function showTip(evt, i) {
+    const d = trace[i]; if (!d) return;
+    tip.replaceChildren();
+    const v = document.createElement("strong"); v.textContent = d.p.toFixed(3);
+    const k = document.createElement("span"); k.className = "k"; k.textContent = "  p(token)";
+    const line2 = document.createElement("div");
+    line2.textContent = `#${i + 1}  "${d.t}"  ·  chunk ${d.c + 1}`;
+    tip.append(v, k, line2);
+    const r = evt.currentTarget.getBoundingClientRect(), below = r.top < 70;
+    tip.style.left = Math.min(Math.max(r.left + r.width / 2, 90), innerWidth - 90) + "px";
+    tip.style.top = (below ? r.bottom : r.top) + "px";
+    tip.style.transform = below ? "translate(-50%, 10px)" : "";
+    tip.hidden = false;
+    highlight(i, true);
+  }
+  function hideTip(i) { tip.hidden = true; highlight(i, false); }
+  function highlight(i, on) {
+    tokensEl.querySelector(`[data-i="${i}"]`)?.classList.toggle("hl", on);
+    strip.querySelector(`.bar[data-i="${i}"]`)?.classList.toggle("hl", on);
+  }
+  function bindHover(el, i) {
+    el.addEventListener("pointerenter", (e) => showTip(e, i));
+    // on touch, "leave" fires right after the tap; keep the tip until focus moves elsewhere
+    el.addEventListener("pointerleave", (e) => { if (e.pointerType !== "touch") hideTip(i); });
+    el.addEventListener("focus", (e) => showTip(e, i));
+    el.addEventListener("blur", () => hideTip(i));
+  }
+
+  function appendToken(d) {
+    const i = trace.length; trace.push(d);
+    if (i === 0) tokensEl.replaceChildren();
+    if (i > 0 && d.c !== trace[i - 1].c) {
+      const r = document.createElement("span"); r.className = "reenc"; r.title = "encoder re-reads the context";
+      tokensEl.appendChild(r);
+    }
+    const s = document.createElement("span");
+    s.className = "tok"; s.dataset.i = i; s.tabIndex = 0; s.style.background = shade(d.p); s.textContent = d.t;
+    s.setAttribute("aria-label", `token ${i + 1}: ${d.t}, probability ${d.p.toFixed(2)}`);
+    bindHover(s, i); tokensEl.appendChild(s); tokensEl.scrollTop = tokensEl.scrollHeight;
+
+    const tr = document.createElement("tr");
+    for (const [val, cls] of [[i + 1, "r"], [JSON.stringify(d.t), ""], [d.p.toFixed(3), "r"], [d.c + 1, "r"]]) {
+      const td = document.createElement("td"); td.textContent = val; if (cls) td.className = cls; tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+    drawChart(); updateStats();
+  }
+
+  function drawChart() {
+    const W = strip.clientWidth || 480, H = 132, padL = 30, padB = 18, padT = 6;
+    const plotW = W - padL, plotH = H - padB - padT, n = trace.length;
+    const slots = Math.max(n, 32), slot = plotW / slots, gap = 2, bw = Math.max(1, slot - gap), rad = Math.min(4, bw / 2);
+    strip.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    strip.replaceChildren();
+    const el = (tag, attrs) => { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+    const y = (p) => padT + plotH * (1 - p);
+    for (const g of [0.5, 1]) strip.appendChild(el("line", { class: "gridline", x1: padL, x2: W, y1: y(g), y2: y(g) }));
+    for (const [g, lab] of [[0, "0"], [0.5, ".5"], [1, "1"]]) {
+      const t = el("text", { class: "axis-label", x: padL - 8, y: y(g) + 4, "text-anchor": "end" }); t.textContent = lab; strip.appendChild(t);
+    }
+    trace.forEach((d, i) => {
+      const x = padL + i * slot + gap / 2;
+      if (i > 0 && d.c !== trace[i - 1].c) {
+        const xr = padL + i * slot;
+        strip.appendChild(el("line", { class: "enc-rule", x1: xr, x2: xr, y1: padT - 2, y2: padT + plotH }));
+      }
+      const h = Math.max(1, plotH * d.p), top = padT + plotH - h, r = Math.min(rad, h);
+      strip.appendChild(el("path", { class: "bar", "data-i": i,
+        d: `M${x},${padT + plotH} V${top + r} Q${x},${top} ${x + r},${top} H${x + bw - r} Q${x + bw},${top} ${x + bw},${top + r} V${padT + plotH} Z` }));
+      const hit = el("rect", { class: "hit", x: padL + i * slot, y: padT, width: slot, height: plotH + padB, tabindex: "-1" });
+      bindHover(hit, i); strip.appendChild(hit);
+    });
+    strip.appendChild(el("line", { class: "baseline", x1: padL, x2: W, y1: padT + plotH, y2: padT + plotH }));
+    if (n) {
+      const t = el("text", { class: "axis-label", x: W, y: H - 2, "text-anchor": "end" }); t.textContent = `${n} tokens`; strip.appendChild(t);
+    }
+  }
+
+  function updateStats(final) {
+    const n = trace.length;
+    $("sTok").textContent = n || "–";
+    $("sEnc").textContent = n ? trace[n - 1].c + 1 : "–";
+    $("sMean").textContent = n ? (trace.reduce((s, d) => s + d.p, 0) / n).toFixed(2) : "–";
+    if (final) $("sTps").textContent = final.seconds > 0 ? `${(final.tokens / final.seconds).toFixed(1)} tok/s` : "–";
+  }
+
+  function resetTrace() {
+    trace = []; tokensEl.innerHTML = TOKEN_PLACEHOLDER; tbody.replaceChildren();
+    $("sTps").textContent = "–"; updateStats(); drawChart();
+  }
+
+  // ---------- request + streaming ----------
+  async function send(text) {
+    text = text.trim();
+    if (!text || busy) return;
+    if (!ready) { addNote("The backend is still starting. Try again in a moment."); return; }
+    busy = true; sendBtn.disabled = true; input.value = "";
+    addTurn("user", text); messages.push({ role: "user", content: text });
+    const row = addTurn("model", ""); row.classList.add("live");
+    const said = row.querySelector(".said");
+    resetTrace();
+
+    // tokens arrive as fast as the server produces them; play them back at the chosen delay
+    const queue = []; let finished = null, reply = "";
+    const playback = new Promise((resolve) => {
+      const step = () => {
+        while (queue.length) {
+          const ev = queue.shift();
+          reply += ev.t; said.textContent = reply.trimStart(); appendToken(ev);
+          transcript.scrollTop = transcript.scrollHeight;
+          const d = +$("delay").value;
+          if (d > 0) { setTimeout(step, d); return; }
+        }
+        if (finished) resolve(); else setTimeout(step, 15);
+      };
+      step();
+    });
+
+    try {
+      controller = new AbortController();
+      const res = await fetch(API + "/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
+        body: JSON.stringify({ messages, temperature: +$("temp").value, top_k: +$("topk").value, max_new_tokens: +$("max").value }),
+      });
+      if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 200)}`);
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      let buf = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let i;
+        while ((i = buf.indexOf("\n\n")) >= 0) {
+          const block = buf.slice(0, i); buf = buf.slice(i + 2);
+          for (const line of block.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            const ev = JSON.parse(line.slice(6));
+            if (ev.done) finished = ev; else queue.push(ev);
+          }
+        }
+      }
+      if (!finished) finished = {};
+      await playback;
+      const final = (finished.text ?? reply).trim() || "…";
+      said.textContent = final; messages.push({ role: "assistant", content: final });
+      updateStats(finished);
+    } catch (e) {
+      finished = finished || {};
+      if (e.name !== "AbortError") { row.remove(); messages.pop(); addNote("Request failed: " + e.message, true); }
+    } finally {
+      row.classList.remove("live"); busy = false; sendBtn.disabled = false; controller = null; input.focus();
+    }
+  }
+
+  // ---------- wiring ----------
+  for (const p of PROMPTS) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; b.textContent = p; b.onclick = () => send(p); li.appendChild(b); $("prompts").appendChild(li);
+  }
+  $("form").addEventListener("submit", (e) => { e.preventDefault(); send(input.value); });
+  $("clear").addEventListener("click", () => {
+    if (controller) controller.abort();
+    messages = []; transcript.replaceChildren(startBlock); resetTrace(); input.focus();
+  });
+  if (window.EG2_REPO) $("codeLink").href = window.EG2_REPO; else $("codeLink").remove();
+  addEventListener("resize", drawChart);
+  drawChart();
+  waitForBackend();
+})();
+</script>
+</body>
+</html>

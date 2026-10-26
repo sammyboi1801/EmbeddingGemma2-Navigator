@@ -1,0 +1,209 @@
+[init] warm start from soda.pt
+[encoder] EmbeddingGemma2TextModel, 271M frozen params
+[data] dailydialog: 9112 conversations x3
+[data] dailydialog: 805 conversations x1
+[data] dialogue: 203511 train / 1931 val
+[vocab] 38838 of 262144 tokens | [dims] table 512-d, hidden 768-d
+[navigator] 10.5M trainable params
+step    100 | ce 2.458 (ppl 11.7) | aux 0.000 | 24s
+step    200 | ce 2.127 (ppl 8.4) | aux 0.000 | 47s
+step    300 | ce 2.673 (ppl 14.5) | aux 0.000 | 70s
+step    400 | ce 2.371 (ppl 10.7) | aux 0.000 | 94s
+step    500 | ce 2.815 (ppl 16.7) | aux 0.000 | 117s
+step    600 | ce 2.485 (ppl 12.0) | aux 0.000 | 140s
+step    700 | ce 2.577 (ppl 13.2) | aux 0.000 | 162s
+step    800 | ce 2.474 (ppl 11.9) | aux 0.000 | 186s
+step    900 | ce 2.271 (ppl 9.7) | aux 0.000 | 211s
+step   1000 | ce 2.294 (ppl 9.9) | aux 0.000 | 234s
+  [val] ce 2.726 (ppl 15.3)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done at work and then went to work a lot.
+  [ckpt] saved soda2.pt (best val ce 2.726)
+step   1100 | ce 2.178 (ppl 8.8) | aux 0.000 | 263s
+step   1200 | ce 2.802 (ppl 16.5) | aux 0.000 | 286s
+step   1300 | ce 2.449 (ppl 11.6) | aux 0.000 | 309s
+step   1400 | ce 1.891 (ppl 6.6) | aux 0.000 | 332s
+step   1500 | ce 2.618 (ppl 13.7) | aux 0.000 | 356s
+step   1600 | ce 2.540 (ppl 12.7) | aux 0.000 | 379s
+step   1700 | ce 2.171 (ppl 8.8) | aux 0.000 | 405s
+step   1800 | ce 2.153 (ppl 8.6) | aux 0.000 | 429s
+step   1900 | ce 2.261 (ppl 9.6) | aux 0.000 | 453s
+step   2000 | ce 2.136 (ppl 8.5) | aux 0.000 | 478s
+  [val] ce 2.712 (ppl 15.1)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I was pretty tired, I got a rain-up and some sleep.
+  [ckpt] saved soda2.pt (best val ce 2.712)
+step   2100 | ce 1.946 (ppl 7.0) | aux 0.000 | 506s
+step   2200 | ce 2.379 (ppl 10.8) | aux 0.000 | 529s
+step   2300 | ce 1.992 (ppl 7.3) | aux 0.000 | 553s
+step   2400 | ce 1.985 (ppl 7.3) | aux 0.000 | 576s
+step   2500 | ce 2.003 (ppl 7.4) | aux 0.000 | 599s
+step   2600 | ce 2.009 (ppl 7.5) | aux 0.000 | 623s
+step   2700 | ce 2.373 (ppl 10.7) | aux 0.000 | 647s
+step   2800 | ce 1.831 (ppl 6.2) | aux 0.000 | 671s
+step   2900 | ce 2.466 (ppl 11.8) | aux 0.000 | 693s
+step   3000 | ce 2.228 (ppl 9.3) | aux 0.000 | 716s
+  [val] ce 2.683 (ppl 14.6)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I was just about to take care of my friends.
+  [ckpt] saved soda2.pt (best val ce 2.683)
+step   3100 | ce 2.224 (ppl 9.2) | aux 0.000 | 745s
+step   3200 | ce 1.710 (ppl 5.5) | aux 0.000 | 769s
+step   3300 | ce 2.257 (ppl 9.6) | aux 0.000 | 793s
+step   3400 | ce 2.095 (ppl 8.1) | aux 0.000 | 817s
+step   3500 | ce 2.781 (ppl 16.1) | aux 0.000 | 839s
+step   3600 | ce 2.354 (ppl 10.5) | aux 0.000 | 862s
+step   3700 | ce 2.575 (ppl 13.1) | aux 0.000 | 886s
+step   3800 | ce 2.669 (ppl 14.4) | aux 0.000 | 910s
+step   3900 | ce 2.282 (ppl 9.8) | aux 0.000 | 934s
+step   4000 | ce 2.470 (ppl 11.8) | aux 0.000 | 957s
+  [val] ce 2.664 (ppl 14.4)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I went to the park and then came home.
+  [ckpt] saved soda2.pt (best val ce 2.664)
+step   4100 | ce 2.332 (ppl 10.3) | aux 0.000 | 985s
+step   4200 | ce 2.087 (ppl 8.1) | aux 0.000 | 1008s
+step   4300 | ce 2.040 (ppl 7.7) | aux 0.000 | 1031s
+step   4400 | ce 2.088 (ppl 8.1) | aux 0.000 | 1056s
+step   4500 | ce 2.177 (ppl 8.8) | aux 0.000 | 1079s
+step   4600 | ce 2.044 (ppl 7.7) | aux 0.000 | 1102s
+step   4700 | ce 2.474 (ppl 11.9) | aux 0.000 | 1124s
+step   4800 | ce 2.386 (ppl 10.9) | aux 0.000 | 1146s
+step   4900 | ce 2.507 (ppl 12.3) | aux 0.000 | 1170s
+step   5000 | ce 2.627 (ppl 13.8) | aux 0.000 | 1193s
+  [val] ce 2.646 (ppl 14.1)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done.
+  [ckpt] saved soda2.pt (best val ce 2.646)
+step   5100 | ce 2.423 (ppl 11.3) | aux 0.000 | 1220s
+step   5200 | ce 2.087 (ppl 8.1) | aux 0.000 | 1243s
+step   5300 | ce 2.114 (ppl 8.3) | aux 0.000 | 1267s
+step   5400 | ce 2.404 (ppl 11.1) | aux 0.000 | 1290s
+step   5500 | ce 2.480 (ppl 11.9) | aux 0.000 | 1315s
+step   5600 | ce 2.082 (ppl 8.0) | aux 0.000 | 1341s
+step   5700 | ce 2.057 (ppl 7.8) | aux 0.000 | 1363s
+step   5800 | ce 2.096 (ppl 8.1) | aux 0.000 | 1387s
+step   5900 | ce 2.335 (ppl 10.3) | aux 0.000 | 1411s
+step   6000 | ce 1.915 (ppl 6.8) | aux 0.000 | 1435s
+  [val] ce 2.603 (ppl 13.5)
+  [sample] User: Hi! How was your day? | Assistant: It was great! I got a lot of work done.
+  [ckpt] saved soda2.pt (best val ce 2.603)
+step   6100 | ce 2.033 (ppl 7.6) | aux 0.000 | 1463s
+step   6200 | ce 1.890 (ppl 6.6) | aux 0.000 | 1486s
+step   6300 | ce 1.728 (ppl 5.6) | aux 0.000 | 1509s
+step   6400 | ce 2.077 (ppl 8.0) | aux 0.000 | 1533s
+step   6500 | ce 2.189 (ppl 8.9) | aux 0.000 | 1556s
+step   6600 | ce 2.139 (ppl 8.5) | aux 0.000 | 1579s
+step   6700 | ce 2.142 (ppl 8.5) | aux 0.000 | 1602s
+step   6800 | ce 1.674 (ppl 5.3) | aux 0.000 | 1625s
+step   6900 | ce 2.037 (ppl 7.7) | aux 0.000 | 1648s
+step   7000 | ce 2.367 (ppl 10.7) | aux 0.000 | 1672s
+  [val] ce 2.591 (ppl 13.3)
+  [sample] User: Hi! How was your day? | Assistant: It was alright. I was just walking and then came along with my friends.
+  [ckpt] saved soda2.pt (best val ce 2.591)
+step   7100 | ce 2.152 (ppl 8.6) | aux 0.000 | 1700s
+step   7200 | ce 2.197 (ppl 9.0) | aux 0.000 | 1724s
+step   7300 | ce 1.913 (ppl 6.8) | aux 0.000 | 1747s
+step   7400 | ce 2.111 (ppl 8.3) | aux 0.000 | 1772s
+step   7500 | ce 2.366 (ppl 10.6) | aux 0.000 | 1795s
+step   7600 | ce 2.155 (ppl 8.6) | aux 0.000 | 1818s
+step   7700 | ce 2.169 (ppl 8.8) | aux 0.000 | 1840s
+step   7800 | ce 2.459 (ppl 11.7) | aux 0.000 | 1864s
+step   7900 | ce 2.160 (ppl 8.7) | aux 0.000 | 1887s
+step   8000 | ce 2.200 (ppl 9.0) | aux 0.000 | 1910s
+  [val] ce 2.524 (ppl 12.5)
+  [sample] User: Hi! How was your day? | Assistant: It was okay. I got a lot done.
+  [ckpt] saved soda2.pt (best val ce 2.524)
+step   8100 | ce 2.190 (ppl 8.9) | aux 0.000 | 1939s
+step   8200 | ce 2.120 (ppl 8.3) | aux 0.000 | 1962s
+step   8300 | ce 2.257 (ppl 9.6) | aux 0.000 | 1984s
+step   8400 | ce 2.196 (ppl 9.0) | aux 0.000 | 2008s
+step   8500 | ce 1.734 (ppl 5.7) | aux 0.000 | 2031s
+step   8600 | ce 2.007 (ppl 7.4) | aux 0.000 | 2055s
+step   8700 | ce 2.533 (ppl 12.6) | aux 0.000 | 2077s
+step   8800 | ce 1.904 (ppl 6.7) | aux 0.000 | 2101s
+step   8900 | ce 1.801 (ppl 6.1) | aux 0.000 | 2124s
+step   9000 | ce 2.009 (ppl 7.5) | aux 0.000 | 2148s
+  [val] ce 2.502 (ppl 12.2)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I had a lot of fun. How was your day?
+  [ckpt] saved soda2.pt (best val ce 2.502)
+step   9100 | ce 2.325 (ppl 10.2) | aux 0.000 | 2176s
+step   9200 | ce 2.286 (ppl 9.8) | aux 0.000 | 2201s
+step   9300 | ce 1.955 (ppl 7.1) | aux 0.000 | 2224s
+step   9400 | ce 2.077 (ppl 8.0) | aux 0.000 | 2247s
+step   9500 | ce 2.140 (ppl 8.5) | aux 0.000 | 2271s
+step   9600 | ce 2.375 (ppl 10.8) | aux 0.000 | 2295s
+step   9700 | ce 2.063 (ppl 7.9) | aux 0.000 | 2319s
+step   9800 | ce 1.921 (ppl 6.8) | aux 0.000 | 2343s
+step   9900 | ce 2.261 (ppl 9.6) | aux 0.000 | 2366s
+step  10000 | ce 2.084 (ppl 8.0) | aux 0.000 | 2389s
+  [val] ce 2.465 (ppl 11.8)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done today.
+  [ckpt] saved soda2.pt (best val ce 2.465)
+step  10100 | ce 2.048 (ppl 7.8) | aux 0.000 | 2416s
+step  10200 | ce 1.987 (ppl 7.3) | aux 0.000 | 2440s
+step  10300 | ce 1.971 (ppl 7.2) | aux 0.000 | 2462s
+step  10400 | ce 1.803 (ppl 6.1) | aux 0.000 | 2485s
+step  10500 | ce 2.046 (ppl 7.7) | aux 0.000 | 2509s
+step  10600 | ce 2.295 (ppl 9.9) | aux 0.000 | 2534s
+step  10700 | ce 2.090 (ppl 8.1) | aux 0.000 | 2557s
+step  10800 | ce 2.504 (ppl 12.2) | aux 0.000 | 2580s
+step  10900 | ce 2.015 (ppl 7.5) | aux 0.000 | 2603s
+step  11000 | ce 1.948 (ppl 7.0) | aux 0.000 | 2626s
+  [val] ce 2.448 (ppl 11.6)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done, but I decided to play the end.
+  [ckpt] saved soda2.pt (best val ce 2.448)
+step  11100 | ce 2.355 (ppl 10.5) | aux 0.000 | 2654s
+step  11200 | ce 1.933 (ppl 6.9) | aux 0.000 | 2677s
+step  11300 | ce 1.767 (ppl 5.9) | aux 0.000 | 2701s
+step  11400 | ce 2.098 (ppl 8.2) | aux 0.000 | 2724s
+step  11500 | ce 2.129 (ppl 8.4) | aux 0.000 | 2748s
+step  11600 | ce 1.936 (ppl 6.9) | aux 0.000 | 2771s
+step  11700 | ce 2.083 (ppl 8.0) | aux 0.000 | 2849s
+step  11800 | ce 1.919 (ppl 6.8) | aux 0.000 | 2873s
+step  11900 | ce 1.908 (ppl 6.7) | aux 0.000 | 2897s
+step  12000 | ce 2.078 (ppl 8.0) | aux 0.000 | 2920s
+  [val] ce 2.430 (ppl 11.4)
+  [sample] User: Hi! How was your day? | Assistant: It was good! I went to the supermarket and then came home.
+  [ckpt] saved soda2.pt (best val ce 2.430)
+step  12100 | ce 1.921 (ppl 6.8) | aux 0.000 | 2948s
+step  12200 | ce 1.927 (ppl 6.9) | aux 0.000 | 2971s
+step  12300 | ce 1.969 (ppl 7.2) | aux 0.000 | 2994s
+step  12400 | ce 1.652 (ppl 5.2) | aux 0.000 | 3017s
+step  12500 | ce 1.907 (ppl 6.7) | aux 0.000 | 3040s
+step  12600 | ce 1.939 (ppl 7.0) | aux 0.000 | 3063s
+step  12700 | ce 1.846 (ppl 6.3) | aux 0.000 | 3086s
+step  12800 | ce 2.009 (ppl 7.5) | aux 0.000 | 3109s
+step  12900 | ce 1.823 (ppl 6.2) | aux 0.000 | 3132s
+step  13000 | ce 2.178 (ppl 8.8) | aux 0.000 | 3156s
+  [val] ce 2.414 (ppl 11.2)
+  [sample] User: Hi! How was your day? | Assistant: It was alright, I guess. Just a little stressed out since we've had a lot of fun lately.
+  [ckpt] saved soda2.pt (best val ce 2.414)
+step  13100 | ce 1.909 (ppl 6.7) | aux 0.000 | 3184s
+step  13200 | ce 2.189 (ppl 8.9) | aux 0.000 | 3208s
+step  13300 | ce 1.879 (ppl 6.5) | aux 0.000 | 3230s
+step  13400 | ce 1.777 (ppl 5.9) | aux 0.000 | 3254s
+step  13500 | ce 2.056 (ppl 7.8) | aux 0.000 | 3277s
+step  13600 | ce 2.219 (ppl 9.2) | aux 0.000 | 3302s
+step  13700 | ce 2.236 (ppl 9.4) | aux 0.000 | 3326s
+step  13800 | ce 2.060 (ppl 7.8) | aux 0.000 | 3350s
+step  13900 | ce 2.402 (ppl 11.0) | aux 0.000 | 3374s
+step  14000 | ce 1.985 (ppl 7.3) | aux 0.000 | 3398s
+  [val] ce 2.408 (ppl 11.1)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done at work and then came home and I went to the grocery store and then we came home.
+  [ckpt] saved soda2.pt (best val ce 2.408)
+step  14100 | ce 1.830 (ppl 6.2) | aux 0.000 | 3427s
+step  14200 | ce 1.972 (ppl 7.2) | aux 0.000 | 3451s
+step  14300 | ce 2.006 (ppl 7.4) | aux 0.000 | 3475s
+step  14400 | ce 2.213 (ppl 9.1) | aux 0.000 | 3498s
+step  14500 | ce 2.138 (ppl 8.5) | aux 0.000 | 3522s
+step  14600 | ce 2.146 (ppl 8.6) | aux 0.000 | 3545s
+step  14700 | ce 2.044 (ppl 7.7) | aux 0.000 | 3570s
+step  14800 | ce 2.217 (ppl 9.2) | aux 0.000 | 3592s
+step  14900 | ce 1.664 (ppl 5.3) | aux 0.000 | 3616s
+step  15000 | ce 2.191 (ppl 8.9) | aux 0.000 | 3638s
+  [val] ce 2.406 (ppl 11.1)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I got a lot done at work and then came home and then got a promotion.
+  [ckpt] saved soda2.pt (best val ce 2.406)
+step  15100 | ce 1.961 (ppl 7.1) | aux 0.000 | 3666s
+step  15200 | ce 1.549 (ppl 4.7) | aux 0.000 | 3689s
+step  15300 | ce 2.130 (ppl 8.4) | aux 0.000 | 3713s
+step  15400 | ce 2.075 (ppl 8.0) | aux 0.000 | 3737s
+  [val] ce 2.406 (ppl 11.1)
+  [sample] User: Hi! How was your day? | Assistant: It was good. I made a new friend this morning and we went to the gym and then came home.
+  [ckpt] saved soda2.pt (best val ce 2.406)
