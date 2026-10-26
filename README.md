@@ -231,9 +231,10 @@ python -m http.server 8000 --directory docs       # frontend
 
 **Deploy the model server (Hugging Face Spaces).**
 
-Log in with a Hugging Face **write** token, then run the deploy script. It creates a public
-Docker Space on the free CPU tier, if it does not exist yet, and uploads only the files the server
-needs:
+Log in with a Hugging Face **write** token, then run the deploy script. It uploads only the files
+the server needs. If the Space does not exist it creates a public Docker Space; creating new
+Docker Spaces may require a Hugging Face PRO plan, but an existing Docker Space can be renamed
+and reused, in which case files from its previous app are removed:
 
 ```bash
 pip install -U huggingface_hub
