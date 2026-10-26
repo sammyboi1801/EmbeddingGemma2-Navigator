@@ -267,7 +267,7 @@ Space URL.
 | `eg2_autoregressive_decoding.py` | Model, data loading, training, generation, `ChatBot` |
 | `server.py` | FastAPI model server that streams tokens as server-sent events |
 | `Dockerfile`, `requirements-server.txt` | Hugging Face Space image |
-| `space/README.md` | Hugging Face Space configuration |
+| `space/README.md`, `space/deploy.py` | Hugging Face Space configuration and deploy script |
 | `docs/` | Static frontend for GitHub Pages |
 | `chat_test.py` | Scripted five-turn chat test |
 | `checkpoints/chat.pt` | Final model: navigator weights, output vocabulary, configuration (40 MB) |
