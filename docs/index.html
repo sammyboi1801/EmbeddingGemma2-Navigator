@@ -79,12 +79,15 @@
   .panel-body { padding: 16px 18px; }
 
   /* transcript */
-  .conv { display: flex; flex-direction: column; height: 640px; }
+  /* Desktop: both panels stretch to the row height; the transcript adds no height of its own
+     (height: 0) and fills the remaining space, scrolling inside it. */
+  .workspace { grid-auto-rows: minmax(640px, auto); }
+  .conv { display: flex; flex-direction: column; }
+  .transcript { flex: 1 1 auto; height: 0; overflow-y: auto; padding: 8px 18px; }
   @media (max-width: 920px) {
-    .conv { height: auto; }
-    .transcript { flex: none; min-height: 200px; max-height: 60vh; }
+    .workspace { grid-auto-rows: auto; }
+    .transcript { flex: none; height: auto; min-height: 200px; max-height: 60vh; }
   }
-  .transcript { flex: 1; overflow-y: auto; padding: 8px 18px; }
   .turn { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
   .turn:last-child { border-bottom: 0; }
   .who { font: 500 11px/1.9 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
@@ -202,15 +205,16 @@
   <section class="hero">
     <div class="eyebrow">Research demo</div>
     <h1>Generating text with a frozen embedding model</h1>
-    <p class="abstract">A frozen EmbeddingGemma 2 encoder reads the conversation and a small trained navigator writes
-      the reply, predicting 16 tokens per encoder pass by pointing into the encoder's own token-embedding table.
+    <p class="abstract">A frozen EmbeddingGemma 2 encoder reads the conversation and turns it into per-token states,
+      the <em>map</em>. A small trained decoder, the <em>navigator</em>, reads that map and writes the reply,
+      16 tokens per encoder pass, choosing each token by pointing into the encoder's own token-embedding table.
       The encoder receives no gradients. Below, every sampled token is shown with its probability and the points
       where the encoder re-reads the context.</p>
     <dl class="figures">
       <div><dt>Encoder (frozen)</dt><dd>271M<small>params</small></dd></div>
       <div><dt>Navigator (trained)</dt><dd>10.5M<small>params</small></dd></div>
       <div><dt>Tokens per encoder pass</dt><dd>16</dd></div>
-      <div><dt>Training compute</dt><dd>1.8 h<small>1× RTX 4060</small></dd></div>
+      <div><dt>Training compute</dt><dd>1.7 h<small>1× RTX 4060</small></dd></div>
     </dl>
   </section>
 
@@ -360,7 +364,9 @@
     for (;;) {
       try {
         const r = await fetch(API + "/health", { cache: "no-store" });
-        if (r.ok) { const h = await r.json(); ready = true; setStatus("ok", `Backend ready · ${h.device}`); return; }
+        // a waking Space can answer with an HTML placeholder page, so require the real health JSON
+        const h = r.ok ? await r.json() : null;
+        if (h && h.status === "ok") { ready = true; setStatus("ok", `Backend ready · ${h.device}`); return; }
       } catch (e) { /* the Space may be waking up */ }
       const s = Math.round((Date.now() - t0) / 1000);
       if (s > 300) { setStatus("err", "Backend unreachable"); return; }

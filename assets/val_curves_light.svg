@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 290" width="900" height="290" font-family="system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" role="img" aria-label="Validation cross-entropy curves for stage 1 and stage 2">
+<text x="46" y="16" fill="#0b0b0b" font-size="14" font-weight="600">Stage 1: social dialogue</text>
+<line x1="46" x2="420.0" y1="214.9" y2="214.9" stroke="#e1e0d9"/>
+<text x="38" y="218.9" fill="#898781" font-size="11" text-anchor="end">2.4</text>
+<line x1="46" x2="420.0" y1="154.6" y2="154.6" stroke="#e1e0d9"/>
+<text x="38" y="158.6" fill="#898781" font-size="11" text-anchor="end">2.8</text>
+<line x1="46" x2="420.0" y1="94.3" y2="94.3" stroke="#e1e0d9"/>
+<text x="38" y="98.3" fill="#898781" font-size="11" text-anchor="end">3.2</text>
+<line x1="46" x2="420.0" y1="34.0" y2="34.0" stroke="#e1e0d9"/>
+<text x="38" y="38.0" fill="#898781" font-size="11" text-anchor="end">3.6</text>
+<line x1="46" x2="420.0" y1="230" y2="230" stroke="#c3c2b7"/>
+<text x="46.0" y="247" fill="#898781" font-size="11" text-anchor="middle">0</text>
+<text x="127.3" y="247" fill="#898781" font-size="11" text-anchor="middle">5k</text>
+<text x="208.6" y="247" fill="#898781" font-size="11" text-anchor="middle">10k</text>
+<text x="289.9" y="247" fill="#898781" font-size="11" text-anchor="middle">15k</text>
+<text x="371.2" y="247" fill="#898781" font-size="11" text-anchor="middle">20k</text>
+<line x1="159.8" x2="159.8" y1="30" y2="230" stroke="#898781" stroke-dasharray="3 3"/>
+<text x="165.8" y="40" fill="#52514e" font-size="11">resumed from 7k checkpoint</text>
+<path d="M62.3,48.6 L78.5,92.6 L94.8,115.1 L111.0,130.2 L127.3,141.5 L143.6,152.8 L159.8,160.5 L176.1,165.8 L192.3,167.9 L208.6,172.3 L224.9,175.1 L241.1,177.8 L257.4,184.3 L273.7,186.1 L289.9,196.2 L306.2,199.5 L322.4,205.1 L338.7,207.7 L355.0,210.4 L371.2,212.8 L387.5,213.7 L403.7,214.0 L410.9,214.0" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="62.3" cy="48.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 1,000: 3.503</title></circle>
+<circle cx="78.5" cy="92.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 2,000: 3.211</title></circle>
+<circle cx="94.8" cy="115.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 3,000: 3.062</title></circle>
+<circle cx="111.0" cy="130.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 4,000: 2.962</title></circle>
+<circle cx="127.3" cy="141.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 5,000: 2.887</title></circle>
+<circle cx="143.6" cy="152.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 6,000: 2.812</title></circle>
+<circle cx="159.8" cy="160.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 7,000: 2.761</title></circle>
+<circle cx="176.1" cy="165.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 8,000: 2.726</title></circle>
+<circle cx="192.3" cy="167.9" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 9,000: 2.712</title></circle>
+<circle cx="208.6" cy="172.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 10,000: 2.683</title></circle>
+<circle cx="224.9" cy="175.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 11,000: 2.664</title></circle>
+<circle cx="241.1" cy="177.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 12,000: 2.646</title></circle>
+<circle cx="257.4" cy="184.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 13,000: 2.603</title></circle>
+<circle cx="273.7" cy="186.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 14,000: 2.591</title></circle>
+<circle cx="289.9" cy="196.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 15,000: 2.524</title></circle>
+<circle cx="306.2" cy="199.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 16,000: 2.502</title></circle>
+<circle cx="322.4" cy="205.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 17,000: 2.465</title></circle>
+<circle cx="338.7" cy="207.7" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 18,000: 2.448</title></circle>
+<circle cx="355.0" cy="210.4" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 19,000: 2.430</title></circle>
+<circle cx="371.2" cy="212.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 20,000: 2.414</title></circle>
+<circle cx="387.5" cy="213.7" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 21,000: 2.408</title></circle>
+<circle cx="403.7" cy="214.0" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 22,000: 2.406</title></circle>
+<circle cx="410.9" cy="214.0" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 22,443: 2.406</title></circle>
+<text x="70.3" y="52.6" fill="#0b0b0b" font-size="12" font-weight="600">3.50</text>
+<text x="410.9" y="204.0" fill="#0b0b0b" font-size="12" font-weight="600" text-anchor="end">2.41</text>
+<text x="514.0" y="16" fill="#0b0b0b" font-size="14" font-weight="600">Stage 2: assistant fine-tune</text>
+<line x1="514.0" x2="888.0" y1="208.2" y2="208.2" stroke="#e1e0d9"/>
+<text x="506.0" y="212.2" fill="#898781" font-size="11" text-anchor="end">3.5</text>
+<line x1="514.0" x2="888.0" y1="164.7" y2="164.7" stroke="#e1e0d9"/>
+<text x="506.0" y="168.7" fill="#898781" font-size="11" text-anchor="end">3.6</text>
+<line x1="514.0" x2="888.0" y1="121.1" y2="121.1" stroke="#e1e0d9"/>
+<text x="506.0" y="125.1" fill="#898781" font-size="11" text-anchor="end">3.7</text>
+<line x1="514.0" x2="888.0" y1="77.6" y2="77.6" stroke="#e1e0d9"/>
+<text x="506.0" y="81.6" fill="#898781" font-size="11" text-anchor="end">3.8</text>
+<line x1="514.0" x2="888.0" y1="34.0" y2="34.0" stroke="#e1e0d9"/>
+<text x="506.0" y="38.0" fill="#898781" font-size="11" text-anchor="end">3.9</text>
+<line x1="514.0" x2="888.0" y1="230" y2="230" stroke="#c3c2b7"/>
+<text x="514.0" y="247" fill="#898781" font-size="11" text-anchor="middle">0</text>
+<text x="638.7" y="247" fill="#898781" font-size="11" text-anchor="middle">1k</text>
+<text x="763.3" y="247" fill="#898781" font-size="11" text-anchor="middle">2k</text>
+<text x="888.0" y="247" fill="#898781" font-size="11" text-anchor="middle">3k</text>
+<path d="M545.2,56.6 L576.3,101.9 L607.5,128.1 L638.7,153.8 L669.8,172.1 L701.0,182.5 L732.2,191.2 L763.3,201.3 L794.5,205.2 L825.7,208.2 L856.8,209.1 L888.0,209.1" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="545.2" cy="56.6" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 250: 3.848</title></circle>
+<circle cx="576.3" cy="101.9" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 500: 3.744</title></circle>
+<circle cx="607.5" cy="128.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 750: 3.684</title></circle>
+<circle cx="638.7" cy="153.8" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 1,000: 3.625</title></circle>
+<circle cx="669.8" cy="172.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 1,250: 3.583</title></circle>
+<circle cx="701.0" cy="182.5" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 1,500: 3.559</title></circle>
+<circle cx="732.2" cy="191.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 1,750: 3.539</title></circle>
+<circle cx="763.3" cy="201.3" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 2,000: 3.516</title></circle>
+<circle cx="794.5" cy="205.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 2,250: 3.507</title></circle>
+<circle cx="825.7" cy="208.2" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 2,500: 3.500</title></circle>
+<circle cx="856.8" cy="209.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 2,750: 3.498</title></circle>
+<circle cx="888.0" cy="209.1" r="4" fill="#2a78d6" stroke="#ffffff" stroke-width="2"><title>step 3,000: 3.498</title></circle>
+<text x="553.2" y="60.6" fill="#0b0b0b" font-size="12" font-weight="600">3.85</text>
+<text x="888.0" y="199.1" fill="#0b0b0b" font-size="12" font-weight="600" text-anchor="end">3.50</text>
+<text x="450.0" y="286" fill="#898781" font-size="12" text-anchor="middle">Validation cross-entropy vs. training step. Stages use different validation sets.</text>
+</svg>

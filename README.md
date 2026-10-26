@@ -1,83 +1,129 @@
----
-title: EG2 Navigator
-emoji: 🧭
-colorFrom: indigo
-colorTo: yellow
-sdk: docker
-app_port: 7860
-pinned: false
-short_description: Frozen EmbeddingGemma 2 + 10M navigator, token-by-token
----
+# EG2 Navigator
 
-# EG2 Navigator: a chatbot that generates with a frozen embedding model
+**Text generation with a frozen embedding model.** A frozen
+[EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2) encoder (271M parameters)
+reads the conversation. A small trained network, the *navigator* (10.5M parameters), writes the
+reply. Only the navigator is trained. After about 1.7 hours on a single laptop GPU, the model
+holds short, fluent multi-turn conversations.
 
-Can a **frozen text-embedding model** be the "reader" of a language model, so that only a tiny
-generator has to be trained? This repo answers that on a laptop GPU. A small trainable
-**navigator** (10.5M params) does next-token prediction while cross-attending to the per-token
-hidden states of a **frozen [EmbeddingGemma 2](https://huggingface.co/google/embeddinggemma-2)
-encoder** (271M params). After about 1h45m of training on an RTX 4060 Laptop GPU it holds
-simple, friendly multi-turn conversations.
+| | |
+|---|---|
+| Encoder | EmbeddingGemma 2 text tower, 271M parameters, **frozen** |
+| Navigator | 4-layer causal transformer, 10.5M parameters, **trained** |
+| Tokens per encoder pass | 16 |
+| Training data | about 230k dialogues, 2 stages |
+| Training compute | about 1.7 h on one RTX 4060 Laptop GPU (8 GB) |
 
 ```
-User: Hi!                                     Bot: Hello! How can I help you today?
-User: What should I cook for dinner tonight?  Bot: I'd recommend cooking. What are your favorite dishes?
-User: Thanks, bye!                            Bot: You're welcome! I hope you enjoy your dinner.
-```
-More (including failures) in [results/demo_transcripts.md](results/demo_transcripts.md).
-
-## How it works
-
-```
- context so far ──► EmbeddingGemma 2 (frozen, bidirectional) ──► per-token states  "the map" (768-d)
-                                                                        │ cross-attention
- start, t1 … t15 ─► Navigator (4-layer causal transformer, d=384) ◄─────┘
-                         │
-                         └─► W_out(h) · E[token]ᵀ  ──►  next token
-                             (E = the encoder's own frozen 512-d token-embedding table)
+User:  Hi!
+Model: Hello! How can I help you today?
+User:  What should I cook for dinner tonight?
+Model: I'd recommend cooking. What are your favorite dishes?
+User:  Thanks, bye!
+Model: You're welcome! I hope you enjoy your dinner.
 ```
 
-* **Map:** the frozen encoder reads the whole conversation and returns per-token hidden states.
-* **Steps:** the navigator generates **K = 16** tokens, self-attending causally to the tokens it
-  has produced so far in that chunk and cross-attending to the map. A recency embedding tells it
-  how far each map position is from the end of the context.
-* **Re-localize:** after 16 tokens the encoder re-reads the full context. This gives one encoder
-  pass per chunk, which is how a bidirectional encoder can drive left-to-right generation.
-* **Tied output:** logits are dot products with the encoder's frozen token-embedding table,
-  restricted to tokens that occur in the training data (about 44.5k of 262k).
-* Chat format: `User: …\nAssistant: …\n`. Loss is computed on assistant turns only, and
-  generation stops at the newline.
+More examples, including failure cases, are in [results/demo_transcripts.md](results/demo_transcripts.md).
 
-Only the navigator is trained; the encoder never receives gradients.
+## Motivation
+
+Text-embedding models are trained to understand text, not to produce it. They are bidirectional
+and output vectors, not tokens. This project asks how far that understanding can be reused for
+generation: if a pretrained embedding model does all the reading, how small can the trained
+generating component be?
+
+## Key terms
+
+The project names its two components after a navigation metaphor.
+
+- **Map.** The per-token hidden states that the frozen encoder produces for the conversation so
+  far (768-d per token). They describe where the conversation currently sits in the encoder's
+  representation space.
+- **Navigator.** The small trainable network that reads the map and writes the reply. It is a
+  causal transformer decoder that cross-attends to the map. It chooses each next token by
+  pointing into the encoder's own frozen token-embedding table: its output vector is scored
+  against every token's embedding. In encoder-decoder terms, it is the decoder of a model whose
+  encoder is frozen and whose output layer is tied to that encoder's input embeddings.
+- **Chunk.** The navigator writes up to K = 16 tokens per map. During a chunk the encoder does
+  not run.
+- **Re-encode.** After each chunk the encoder reads the whole conversation again, including the
+  navigator's new tokens, and produces a fresh map. This is how a bidirectional encoder supports
+  left-to-right generation: one encoder pass per chunk, not per token.
+
+## Method
+
+```
+            conversation so far (≤ 384 tokens)
+                          │
+                          ▼
+         ┌────────────────────────────────────┐
+         │ EmbeddingGemma 2 encoder (frozen)  │   once per chunk
+         └────────────────────────────────────┘
+                          │  map: per-token states, 768-d
+                          ▼  cross-attention
+         ┌────────────────────────────────────┐
+         │ navigator (trained, causal)        │   16 steps per chunk
+         └────────────────────────────────────┘
+                          │  logits = W·h · Eᵀ + b   (E: frozen token-embedding table)
+                          ▼
+               next 16 tokens ──► append to the conversation and re-encode
+```
+
+**Encoder.** The EmbeddingGemma 2 text tower: 24 bidirectional layers of width 512, using
+sliding-window attention with full attention every sixth layer. Its normalized, projected
+768-d output is the map. It receives no gradients.
+
+**Navigator.** Four pre-LayerNorm blocks of width 384 with 6 heads. Each block applies causal
+self-attention over the tokens written so far in the chunk, cross-attention to the map, and an
+MLP. The inputs are:
+
+- the navigator's previous tokens, embedded with the frozen table and a learned projection
+  (512 → 384);
+- the map, with a learned projection (768 → 384) plus a recency embedding that encodes each
+  position's distance from the end of the context;
+- a learned start vector and 16 learned position embeddings.
+
+**Output.** The navigator projects to the 512-d token-embedding space. Logits are dot products
+with the frozen table rows plus a learned per-token bias, computed over the 44,540 tokens that
+occur in the training data (17% of the 262k vocabulary).
+
+**Objective.** Each training example cuts a conversation at a random point inside an assistant
+turn. Half the time the cut is exactly at the start of a reply, which is the situation at chat
+time. The navigator predicts the next 16 tokens. Cross-entropy is computed on assistant tokens
+only. Conversations use the format `User: …\nAssistant: …\n`, and generation stops at the
+newline.
 
 ## Results
 
-| | Stage 1: social chat | Stage 2: assistant fine-tune |
+Training runs in two stages: fluency on social dialogue, then an assistant-style fine-tune.
+
+| | Stage 1: social dialogue | Stage 2: assistant fine-tune |
 |---|---|---|
 | Data | [SODA](https://huggingface.co/datasets/allenai/soda) (turns ≤ 30 words) + [DailyDialog](https://huggingface.co/datasets/OpenRL/daily_dialog) ×3 | [everyday-conversations](https://huggingface.co/datasets/HuggingFaceTB/everyday-conversations-llama3.1-2k) ×4 + [Empathetic Dialogues](https://huggingface.co/datasets/Estwld/empathetic_dialogues_llm) |
-| Train sequences | 203,511 | 28,571 |
-| Steps × batch | ~22.4k × 32 | 3,000 × 32 |
-| LR | 3e-4, cosine | 1e-4, cosine, warm start |
-| Time (RTX 4060 Laptop) | ~91 min (0.237 s/step) | ~10 min |
-| Val CE | 3.50 → **2.406** | 3.85 → **3.498** (everyday 3.55, empathetic 3.44) |
+| Training conversations | 203,511 | 28,571 |
+| Steps × batch | about 22.4k × 32 | 3,000 × 32 |
+| Learning rate | 3e-4, cosine | 1e-4, cosine, warm start from stage 1 |
+| Wall-clock time | about 93 min | about 10 min |
+| Validation cross-entropy | 3.50 → **2.41** | 3.85 → **3.50** |
 
-Val CE is not comparable across stages: the validation sets differ, and assistant replies carry
-more content than small talk.
+Validation sets differ between stages, so the two cross-entropy values are not directly
+comparable. In stage 2 the reported value is the equal-weight mean of the everyday (3.55) and
+empathetic (3.44) validation sets.
 
-**What the stages do.** Stage 1 teaches fluent turn-taking, but SODA is role-play between two
-named characters, so the bot sometimes casts itself into your story ("You're going to miss me
-too, Annalisa"). Stage 2 replaces that with a consistent assistant/listener voice: greetings,
-follow-up questions, supportive replies.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/val_curves_dark.svg">
+  <img src="assets/val_curves_light.svg" alt="Validation cross-entropy per training step. Stage 1 falls from 3.50 to 2.41 over 22.4k steps; stage 2 falls from 3.85 to 3.50 over 3k steps." width="100%">
+</picture>
 
-**Limitations.** It has very little world knowledge. "Why is the sky blue?" gets an on-topic but
-meaningless answer about "light" and "colors". It deflects "Who are you?", and it can lose the
-thread after 2–3 turns. The frozen encoder understands the question, but a 10M-parameter
-generator has little to answer with. Use **temp 0.5** for the most coherent replies.
+Stage 1 was interrupted at step 7.7k and continued from the step-7k checkpoint at learning rate
+2.4e-4, close to the original cosine schedule at that point, with a freshly initialized
+optimizer. The charts are generated from [logs/](logs/) by
+[scripts/plot_val_curves.py](scripts/plot_val_curves.py).
 
-<details><summary>Validation curves</summary>
+<details>
+<summary>Validation values</summary>
 
-Stage 1 (steps 1k–7k from the first run; the run was then interrupted and warm-started from the
-step-7k checkpoint at lr 2.4e-4, close to the original cosine schedule at that point, with fresh
-optimizer state):
+Stage 1:
 
 | step | 1k | 2k | 3k | 4k | 5k | 6k | 7k | 9k | 11k | 13k | 15k | 17k | 19k | 21k | 22.4k |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -88,107 +134,156 @@ Stage 2:
 | step | 250 | 500 | 750 | 1000 | 1500 | 2000 | 2500 | 2750 | 3000 |
 |---|---|---|---|---|---|---|---|---|---|
 | val CE | 3.848 | 3.744 | 3.684 | 3.625 | 3.559 | 3.516 | 3.500 | 3.498 | 3.498 |
-
-Full logs are in [logs/](logs/).
 </details>
 
-## Quick start
+**Effect of each stage.** Stage 1 produces fluent turn-taking. However, SODA consists of
+role-play between named characters, and the stage-1 model sometimes casts itself as a character
+in the user's story ("You're going to miss me too, Annalisa"). Stage 2 replaces this with a
+consistent assistant voice: greetings, follow-up questions, and supportive replies.
+
+**Limitations.**
+
+- **Little world knowledge.** Factual questions get on-topic but empty answers. "Why is the sky
+  blue?" produces a sentence about "light" and "colors" with no explanation.
+- **Short coherence span.** The model can lose the thread after two or three turns. The context
+  window is 384 tokens.
+- **Sampling sensitivity.** Temperature 0.5 gives the most coherent replies. Higher values
+  surface more low-probability tokens.
+- **Scale.** Training used about 12M target tokens. A generally capable assistant would need a
+  much larger navigator and orders of magnitude more data.
+
+## Getting started
+
+Install the CUDA build of PyTorch from [pytorch.org](https://pytorch.org), then install the
+remaining dependencies:
 
 ```bash
-pip install torch --index-url https://download.pytorch.org/whl/cu128   # CUDA build of PyTorch
+pip install torch --index-url https://download.pytorch.org/whl/cu128
 pip install -r requirements.txt
-
-python eg2_autoregressive_decoding.py --chat --ckpt checkpoints/chat.pt --temp 0.5   # interactive
-python chat_test.py checkpoints/chat.pt                                              # scripted test
 ```
+
+Chat in the terminal, or run the scripted five-turn test:
+
+```bash
+python eg2_autoregressive_decoding.py --chat --ckpt checkpoints/chat.pt --temp 0.5
+python chat_test.py checkpoints/chat.pt
+```
+
+Or use the Python API:
+
 ```python
 from eg2_autoregressive_decoding import ChatBot
+
 bot = ChatBot("checkpoints/chat.pt", temp=0.5)
-bot.say("Hi!"); bot.reset()
-```
-The encoder (about 0.6 GB) downloads from Hugging Face on first use. Inference works on CPU but is
-faster on a GPU.
-
-## Web demo: GitHub Pages frontend + Hugging Face Space backend
-
-```
- GitHub Pages (docs/index.html)  ──POST /chat──►  HF Space (Dockerfile → server.py, FastAPI, CPU)
-   chat UI + live token panel   ◄── SSE stream ──  one event per token: {"t": text, "p": prob, "c": chunk}
-```
-The page streams each reply into the chat and shows every sampled token, colored by model
-confidence (hover for the probability). The underline color changes with each 16-token chunk, and
-**⟳** marks every point where the frozen encoder re-reads the conversation. A playback-delay slider
-slows the stream down so you can watch.
-
-**Run locally**
-```bash
-uvicorn server:app --port 7860                       # backend
-python -m http.server 8000 --directory docs          # frontend
-# open http://127.0.0.1:8000/?api=http://127.0.0.1:7860
+print(bot.say("Hi!"))
+bot.reset()  # start a new conversation
 ```
 
-**1. Deploy the backend (Hugging Face Space, free CPU tier).** The YAML header at the top of this
-README is the Space config (`sdk: docker`). Create a Docker Space named `eg2-navigator` (the
-"Blank" template), then upload:
-```bash
-pip install -U huggingface_hub
-hf auth login
-hf upload <hf-user>/eg2-navigator . . --repo-type space \
-    --exclude "checkpoints/archive/*" "logs/*" "results/*" "docs/*"
-```
-The Space builds the image, bakes the encoder in, and serves at
-`https://<hf-user>-eg2-navigator.hf.space`. Check `/health`. `chat.pt` (40 MB) is stored with
-Xet/LFS automatically. The Space must be **public** for the page to reach it.
+The encoder weights download from Hugging Face on first use. Inference runs on CPU or GPU.
 
-**2. Deploy the frontend (GitHub Pages).** Set `window.EG2_API` in `docs/config.js` to your Space
-URL. Push the repo, then go to Settings → Pages → Deploy from a branch → `main` / `/docs`.
+## Training
 
-**Notes**
-* A free Space sleeps after about 48 h idle. The page shows "Waking the backend…" and retries
-  until it is up (about 1 min).
-* `ALLOWED_ORIGINS` (a Space variable) restricts CORS to your Pages origin, e.g.
-  `https://<gh-user>.github.io`. The default is `*`.
-* Requests are capped at 20 turns and 160 new tokens, and the server runs one generation at a
-  time.
-
-## Reproduce training
+Tested on Windows 11 with an RTX 4060 Laptop GPU (8 GB VRAM) and 16 GB RAM. Peak usage is about
+5.5 GB VRAM and 6–8 GB RAM, the latter while tokenizing SODA.
 
 ```bash
-# smoke test (~2 min) to measure seconds/step
+# Smoke test (about 2 min); use it to measure seconds per step
 python eg2_autoregressive_decoding.py --data dialogue --daily 3 --steps 300 --eval_every 300 \
     --max_len 384 --n_stories 20000 --max_turn_words 30 --aux_weight 0 --ckpt test.pt
 
-# stage 1 (~90 min on an RTX 4060 Laptop; STEPS = 5400 / seconds_per_step)
+# Stage 1: social dialogue (about 90 min; steps = 5400 / seconds_per_step)
 python eg2_autoregressive_decoding.py --data dialogue --daily 3 --steps 23143 --max_len 384 \
     --n_stories 300000 --max_turn_words 30 --aux_weight 0 --ckpt soda.pt
 
-# stage 2 (~10 min)
+# Stage 2: assistant fine-tune (about 10 min)
 python eg2_autoregressive_decoding.py --data chatmix --init soda.pt --steps 3000 --lr 1e-4 \
     --max_len 384 --eval_every 250 --aux_weight 0 --ckpt chat.pt
 ```
-Notes:
-* A checkpoint is written only when val CE improves, so `--ckpt` always holds the best model.
-* Peak usage is about 5.5 GB VRAM and 6–8 GB system RAM (during SODA tokenization).
-* In `chatmix`, val CE is the equal-weight mean of the everyday and empathetic sets, and both are
-  printed.
-* `--aux_weight 0` disables the optional "where will the chunk land" auxiliary loss, which halves
-  encoder compute.
+
+- A checkpoint is written only when validation cross-entropy improves, so `--ckpt` always holds
+  the best model so far.
+- `--daily N` mixes DailyDialog into stage 1, repeated N times. `--data chatmix` reports
+  validation cross-entropy per source.
+- `--aux_weight 0` disables an optional auxiliary loss that predicts the encoder's pooled
+  embedding after each chunk. Disabling it halves encoder compute.
+
+## Web demo
+
+The demo is split between a static frontend and a model server:
+
+```
+GitHub Pages: docs/index.html  ──── POST /chat ────►  Hugging Face Space: server.py (FastAPI, CPU)
+chat + decoding trace          ◄── server-sent events: one per token {"t": text, "p": prob, "c": chunk}
+```
+
+The page streams each reply token by token. For every sampled token it shows the token's
+probability, as shading and as a bar chart, and it marks each point where the encoder re-reads
+the context.
+
+**Run locally**
+
+```bash
+pip install fastapi uvicorn
+uvicorn server:app --port 7860                    # model server
+python -m http.server 8000 --directory docs       # frontend
+# open http://127.0.0.1:8000/?api=http://127.0.0.1:7860
+```
+
+**Deploy the model server (Hugging Face Spaces).**
+
+1. Create a public Space with the **Docker** SDK (free CPU tier).
+2. Upload the server files and the Space configuration:
+
+   ```bash
+   pip install -U huggingface_hub
+   hf auth login
+   hf upload <hf-user>/eg2-navigator . . --repo-type space \
+       --exclude "README.md" "space/*" "docs/*" "logs/*" "results/*" "checkpoints/archive/*"
+   hf upload <hf-user>/eg2-navigator space/README.md README.md --repo-type space
+   ```
+
+   The [Dockerfile](Dockerfile) installs CPU PyTorch, downloads the encoder at build time, and
+   serves at `https://<hf-user>-eg2-navigator.hf.space`. `GET /health` reports readiness.
+
+**Deploy the frontend (GitHub Pages).**
+
+1. Set `window.EG2_API` in [docs/config.js](docs/config.js) to the Space URL.
+2. In the GitHub repository, open Settings → Pages and deploy from the `main` branch, `/docs`
+   folder.
+
+**Server limits.** The server accepts at most 20 turns and 160 new tokens per request, and runs
+one generation at a time. To restrict CORS to your Pages domain, set the Space variable
+`ALLOWED_ORIGINS`, for example `https://<gh-user>.github.io`.
+
+**Sleep.** A free CPU Space sleeps after 48 hours without requests. The page polls `/health` on
+load and waits while the Space starts, which takes about a minute. To keep it awake, the
+[keep-warm workflow](.github/workflows/keep-warm.yml) pings `/health` every 12 hours: set the
+repository variable `SPACE_URL` (Settings → Secrets and variables → Actions → Variables) to the
+Space URL.
 
 ## Repository layout
 
-```
-eg2_autoregressive_decoding.py   model, data loaders, training, generation, ChatBot
-server.py                        FastAPI backend: streams tokens over SSE (Hugging Face Space)
-Dockerfile, requirements-server.txt   Space image (CPU PyTorch, encoder baked in)
-docs/index.html, docs/config.js  static frontend for GitHub Pages
-chat_test.py                     scripted 5-turn chat test
-checkpoints/chat.pt              final model (navigator weights + vocab + args, ~40 MB)
-logs/                            training logs for the smoke test, stage 1 (two parts) and stage 2
-results/demo_transcripts.md      sample conversations from both stages
-```
+| Path | Contents |
+|---|---|
+| `eg2_autoregressive_decoding.py` | Model, data loading, training, generation, `ChatBot` |
+| `server.py` | FastAPI model server that streams tokens as server-sent events |
+| `Dockerfile`, `requirements-server.txt` | Hugging Face Space image |
+| `space/README.md` | Hugging Face Space configuration |
+| `docs/` | Static frontend for GitHub Pages |
+| `chat_test.py` | Scripted five-turn chat test |
+| `checkpoints/chat.pt` | Final model: navigator weights, output vocabulary, configuration (40 MB) |
+| `logs/` | Training logs: smoke test, stage 1 (two parts), stage 2 |
+| `results/demo_transcripts.md` | Sample conversations from both stages |
+| `scripts/plot_val_curves.py`, `assets/` | Validation-curve charts, generated from `logs/` |
 
-## Licenses and data
+## Data and licenses
 
-The encoder, `google/embeddinggemma-2`, is Apache-2.0. The training datasets have their own
-licenses, and some (DailyDialog, Empathetic Dialogues) are **non-commercial**, so
-`checkpoints/chat.pt` is for research and demo use only. See each dataset card for terms.
+- Encoder: [google/embeddinggemma-2](https://huggingface.co/google/embeddinggemma-2), Apache-2.0.
+- Training data: [SODA](https://huggingface.co/datasets/allenai/soda),
+  [DailyDialog](https://huggingface.co/datasets/OpenRL/daily_dialog),
+  [everyday-conversations](https://huggingface.co/datasets/HuggingFaceTB/everyday-conversations-llama3.1-2k),
+  [Empathetic Dialogues](https://huggingface.co/datasets/Estwld/empathetic_dialogues_llm).
+
+Some of these datasets (DailyDialog, Empathetic Dialogues) are licensed for non-commercial use
+only. The released checkpoint is therefore intended for research and demonstration. See each
+dataset card for its terms.
