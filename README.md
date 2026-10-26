@@ -11,6 +11,8 @@ and inspect each sampled token. The model server runs on a
 [Hugging Face Space](https://huggingface.co/spaces/sammyboi1801/EmbeddingGemma2-Navigator) and
 may take about a minute to start if it has been idle.
 
+[![Demo: a three-turn conversation on the left; on the right, the decoding trace of the last reply, with each token shaded by probability, a per-token probability bar chart with dashed lines at the two encoder re-reads, and summary statistics.](assets/demo_dark.png)](https://sammyboi1801.github.io/EmbeddingGemma2-Navigator/)
+
 | | |
 |---|---|
 | Encoder | EmbeddingGemma 2 text tower, 271M parameters, **frozen** |
